@@ -14,13 +14,22 @@ var {
   AlertIOS,
   ListView,
   Image,
+  TouchableOpacity,
+  NavigatorIOS,
 } = React;
 
+require("image!red-button");
+require("image!blue-button");
+require("image!yellow-button");
+require("image!green-button");
+
 var AddItem = (function() {
-  var styles = StyleSheet.create({
+  var css = StyleSheet.create({
     container: {
-      marginTop: -200,
-      padding: 10,
+      flex: 1,
+      paddingTop: 16,
+      // marginTop: -200,
+      // padding: 10,
       // backgroundColor: 'red',
     },
 
@@ -29,10 +38,11 @@ var AddItem = (function() {
       fontWeight: '100',
       fontSize: 36,
       marginBottom: 25,
+      textAlign: 'center'
     },
 
     input: {
-      flex: 1,
+      // flex: 1,
       // backgroundColor: 'green',
       height: 50,
       padding: 10,
@@ -41,7 +51,27 @@ var AddItem = (function() {
 
       backgroundColor: '#F7FF00'
     },
+
+    colorSelectContainer: {
+      padding: 20,
+      flexDirection: 'row',
+      justifyContent: 'center',
+    },
+
+    colorSelector: {
+      margin: 10,
+    },
+
+    cancelButton: {
+      // right: 10,
+      position: 'absolute',
+      // textAlign: 'right'
+      right: 10,
+      marginTop: 10,
+    }
   });
+
+  var styles = css;
 
   return React.createClass({
     onSubmit: function(e) {
@@ -50,14 +80,34 @@ var AddItem = (function() {
       AlertIOS.alert("Received Input",text);
     },
 
+    onCancel: function(e) {
+      this.props.navigator.pop();
+    },
+
     render: function() {
+      var buttons = ["red","yellow","blue","green"].map(function(color) {
+        return (
+          <Image
+            style={css.colorSelector}
+            source={require("image!"+color+"-button")}/>
+        );
+      });
+
       return (
-        <View style={styles.container}>
-          <Text style={styles.label}>Change The World</Text>
+        <View style={css.container}>
+          <View style={css.colorSelectContainer}>
+            {buttons}
+          </View>
+          <Text style={css.label}>Change The World</Text>
           <TextInput ref="input"
-            style={styles.input}
+            style={css.input}
             onSubmitEditing={this.onSubmit}
             placeholder="One TODO at a time"/>
+          <TouchableOpacity onPress={this.onCancel}>
+            <Image style={css.cancelButton}
+              source={require("image!cancel-button")}/>
+          </TouchableOpacity>
+
         </View>
       );
     },
@@ -69,10 +119,6 @@ var todos = [
   {title: "Let the dogs out"},
 ];
 
-require("image!red-button");
-require("image!blue-button");
-require("image!yellow-button");
-require("image!green-button");
 
 var TodoList = (function() {
   var css = StyleSheet.create({
@@ -140,6 +186,12 @@ var TodoList = (function() {
       );
     },
 
+    onAddItemTapped: function() {
+      this.props.navigator.push({
+        component: AddItem,
+      });
+    },
+
     render: function() {
       var buttons = ["red","yellow","blue","green"].map(function(color) {
         return (
@@ -156,9 +208,11 @@ var TodoList = (function() {
               renderRow={this.renderTodo}/>
           <View style={css.toolbar}>
             {buttons}
-            <Image
-              style={css.addItemButton}
-              source={require("image!add-item-button")}/>
+            <TouchableOpacity onPress={this.onAddItemTapped}>
+              <Image
+                style={css.addItemButton}
+                source={require("image!add-item-button")}/>
+            </TouchableOpacity>
 
           </View>
         </View>
@@ -167,21 +221,25 @@ var TodoList = (function() {
   });
 })();
 
-
-
-
-
 var Todo = React.createClass({
   render: function() {
     return (
-      <View style={styles.container}>
-        <TodoList/>
-      </View>
+      <NavigatorIOS style={styles.nav}
+        navigationBarHidden={true}
+        initialRoute={{
+          component: TodoList,
+          // component: AddItem,
+        }}>
+      </NavigatorIOS>
     );
   }
 });
 
 var styles = StyleSheet.create({
+  nav: {
+    flex: 1,
+  },
+
   container: {
     flex: 1,
     justifyContent: 'center',
