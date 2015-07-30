@@ -13,6 +13,7 @@ var {
   View,
   AlertIOS,
   ListView,
+  Image,
 } = React;
 
 var AddItem = (function() {
@@ -68,11 +69,53 @@ var todos = [
   {title: "Let the dogs out"},
 ];
 
+require("image!red-button");
+require("image!blue-button");
+require("image!yellow-button");
+require("image!green-button");
+
 var TodoList = (function() {
-  var style = StyleSheet.create({
+  var css = StyleSheet.create({
     container: {
       flex: 1,
+      // backgroundColor: 'rgba(255,0,0,0.3)',
     },
+
+    toolbar: {
+      height: 75,
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+
+    },
+
+    colorSelector: {
+      margin: 10,
+    },
+
+    addItemButton: {
+      marginLeft: 10,
+    },
+
+    todoRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 2,
+    },
+
+    todoText: {
+      fontSize: 20,
+      fontWeight: '100',
+    },
+
+    todoColor: {
+      width: 15,
+      height: 50,
+      backgroundColor: '#3AFF47',
+      marginRight: 15,
+    },
+
+
   });
 
   return React.createClass({
@@ -83,12 +126,41 @@ var TodoList = (function() {
       };
     },
 
-    render: function() {
+    renderTodo: function(todo) {
       return (
-        <View style={style.container}>
+        <View style={css.todoRow}>
+          <View style={css.todoColor}>
+          </View>
+          <Text
+            style={css.todoText}>
+            {todo.title}
+          </Text>
+        </View>
+
+      );
+    },
+
+    render: function() {
+      var buttons = ["red","yellow","blue","green"].map(function(color) {
+        return (
+          <Image
+            style={css.colorSelector}
+            source={require("image!"+color+"-button")}/>
+        );
+      });
+
+      return (
+        <View style={css.container}>
           <ListView
               dataSource={this.state.dataSource}
-              renderRow={(row) => <Text>{row.title}</Text>}/>
+              renderRow={this.renderTodo}/>
+          <View style={css.toolbar}>
+            {buttons}
+            <Image
+              style={css.addItemButton}
+              source={require("image!add-item-button")}/>
+
+          </View>
         </View>
       );
     },
