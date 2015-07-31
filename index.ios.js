@@ -16,6 +16,7 @@ var {
   Image,
   TouchableOpacity,
   NavigatorIOS,
+  Animated,
 } = React;
 
 var Baobab = require("baobab");
@@ -144,17 +145,33 @@ var TodoListItem = (function() {
   });
 
   return React.createClass({
+    getInitialState: function() {
+      return {
+        opacity: new Animated.Value(0),
+      }
+    },
+
+    componentWillMount: function() {
+      Animated.timing(this.state.opacity,{
+        duration: 1000,
+        toValue: 1,
+      }).start();
+    },
+
     render: function() {
       var todo = this.props.todo;
+      var animatedStyles = {
+        opacity: this.state.opacity,
+      };
       return (
-        <View style={css.todoRow}>
+        <Animated.View style={[css.todoRow,animatedStyles]}>
           <View style={css.todoColor}>
           </View>
           <Text
             style={css.todoText}>
             {todo.title}
           </Text>
-        </View>
+        </Animated.View>
       );
     },
   });
@@ -182,10 +199,6 @@ var TodoList = (function() {
     addItemButton: {
       marginLeft: 10,
     },
-
-
-
-
   });
 
   return React.createClass({
