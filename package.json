@@ -6,6 +6,10 @@
     "start": "node_modules/react-native/packager/packager.sh"
   },
   "dependencies": {
-    "react-native": "^0.8.0"
+    "backbone": "^1.2.1",
+    "backbone-react-component": "^0.9.0",
+    "react": "^0.13.3",
+    "react-native": "^0.8.0",
+    "jquery": "^2.1.4"
   }
 }

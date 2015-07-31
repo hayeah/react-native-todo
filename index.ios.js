@@ -18,6 +18,14 @@ var {
   NavigatorIOS,
 } = React;
 
+var Baobab = require("baobab");
+var db = new Baobab({
+  todos: [{title: "Bring back the milk"},{title: "Let the dogs out"}],
+});
+
+var todos = db.select("todos");
+
+
 require("image!red-button");
 require("image!blue-button");
 require("image!yellow-button");
@@ -76,8 +84,8 @@ var AddItem = (function() {
   return React.createClass({
     onSubmit: function(e) {
       var text = e.nativeEvent.text;
-      // console.log("input",this.refs.input.value, arguments);
-      AlertIOS.alert("Received Input",text);
+      todos.push({title: text});
+      this.props.navigator.pop();
     },
 
     onCancel: function(e) {
@@ -114,11 +122,43 @@ var AddItem = (function() {
   });
 })();
 
-var todos = [
-  {title: "Bring back the milk"},
-  {title: "Let the dogs out"},
-];
+var TodoListItem = (function() {
+  var css = StyleSheet.create({
+    todoRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 2,
+    },
 
+    todoText: {
+      fontSize: 20,
+      fontWeight: '100',
+    },
+
+    todoColor: {
+      width: 15,
+      height: 50,
+      backgroundColor: '#3AFF47',
+      marginRight: 15,
+    },
+  });
+
+  return React.createClass({
+    render: function() {
+      var todo = this.props.todo;
+      return (
+        <View style={css.todoRow}>
+          <View style={css.todoColor}>
+          </View>
+          <Text
+            style={css.todoText}>
+            {todo.title}
+          </Text>
+        </View>
+      );
+    },
+  });
+})();
 
 var TodoList = (function() {
   var css = StyleSheet.create({
@@ -143,47 +183,35 @@ var TodoList = (function() {
       marginLeft: 10,
     },
 
-    todoRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginBottom: 2,
-    },
 
-    todoText: {
-      fontSize: 20,
-      fontWeight: '100',
-    },
-
-    todoColor: {
-      width: 15,
-      height: 50,
-      backgroundColor: '#3AFF47',
-      marginRight: 15,
-    },
 
 
   });
 
   return React.createClass({
+    componentWillMount: function() {
+      this.todosUpdated();
+      todos.on("update",this.todosUpdated);
+    },
+
+    componentWillUnmount: function() {
+      todos.off("update",this.todosUpdated);
+    },
+
     getInitialState: function() {
-      var ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2});
       return {
-        dataSource: ds.cloneWithRows(todos),
+        dataSource: new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2}),
       };
     },
 
-    renderTodo: function(todo) {
-      return (
-        <View style={css.todoRow}>
-          <View style={css.todoColor}>
-          </View>
-          <Text
-            style={css.todoText}>
-            {todo.title}
-          </Text>
-        </View>
+    todosUpdated: function() {
+      this.setState({
+        dataSource: this.state.dataSource.cloneWithRows(todos.get()),
+      });
+    },
 
-      );
+    renderTodo: function(todo) {
+      return <TodoListItem todo={todo}></TodoListItem>;
     },
 
     onAddItemTapped: function() {
