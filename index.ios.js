@@ -19,7 +19,10 @@ var {
   Animated,
   PanResponder,
   LayoutAnimation,
+  StatusBarIOS,
 } = React;
+
+StatusBarIOS.setHidden(true);
 
 var ColorHexes = {
   "red": "#FE4515",
@@ -57,7 +60,10 @@ require("image!blue-button");
 require("image!yellow-button");
 require("image!green-button");
 require("image!orange-button");
-
+require("image!find-icon");
+var IMAGE = {
+  FIND_ICON: require("image!find-icon"),
+};
 
 
 var AddItem = (function() {
@@ -309,15 +315,61 @@ var TodoList = (function() {
       flexDirection: 'row',
       justifyContent: 'center',
       alignItems: 'center',
+      // backgroundColor: 'rgba(255,0,0,0.1)'
+      // opacity: 0.1,
 
     },
 
     colorSelector: {
-      margin: 10,
+      margin: 9,
     },
 
     addItemButton: {
       marginLeft: 10,
+    },
+
+    queryButton: {
+      marginRight: 5,
+    },
+
+    queryBox: {
+      flexDirection: 'row',
+      backgroundColor: '#71C3FF',
+      justifyContent: 'center',
+      alignItems: 'center',
+      height: 60,
+
+      // shadowColor: "#000",
+      // shadowOffset: {height: 100, width: 100},
+      // shadowRadius: 2,
+      // shadowOpacity: 1,
+      // marginBottom: -15,
+    },
+
+    queryBoxHidden: {
+      marginTop: -70,
+    },
+
+    queryInput: {
+      flex: 1,
+      borderColor: "#fff",
+      borderWidth: 1,
+      // width: 100,
+      color: "#fff",
+      padding: 5,
+      margin: 10,
+      marginLeft: 5,
+      height: 30,
+    },
+
+    queryIcon: {
+      tintColor: "#fff",
+      margin: 10,
+    },
+
+    todoList: {
+      padding: -20,
+      // marginTop: -20,
     },
   });
 
@@ -391,6 +443,14 @@ var TodoList = (function() {
       }
     },
 
+    toggleQueryInput: function() {
+      this.setState({
+        showQueryInput: !this.state.showQueryInput,
+      });
+
+      LayoutAnimation.easeInEaseOut();
+    },
+
     render: function() {
       var buttons = ["red","orange","blue","green"].map((color) => {
         var embiggen;
@@ -410,12 +470,19 @@ var TodoList = (function() {
 
       return (
         <View style={css.container}>
-          <ListView
+          <View style={[css.queryBox,this.state.showQueryInput ? null : css.queryBoxHidden]}>
+            <Image style={css.queryIcon} source={IMAGE.FIND_ICON}/>
+            <View style={{flex: 1}}><TextInput style={css.queryInput}/></View>
+          </View>
+          <ListView style={css.todoList}
               dataSource={this.state.dataSource}
               renderRow={this.renderTodo}
               // without setting the pageSize we get weird artifact
               pageSize={10}/>
           <View style={css.toolbar}>
+            <TouchableOpacity onPress={this.toggleQueryInput}>
+              <Image style={css.queryButton} source={IMAGE.FIND_ICON}/>
+            </TouchableOpacity>
             {buttons}
             <TouchableOpacity onPress={this.onAddItemTapped}>
               <Image
