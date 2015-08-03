@@ -46,10 +46,10 @@ function completeTodo(todo) {
   todos.unset(String(todo.id));
 }
 
-createTodo("Bring back the milk",ColorHexes["green"]);
-createTodo("Let the dogs out", ColorHexes["red"]);
-createTodo("Meditate for 10 seconds", ColorHexes["blue"]);
-createTodo("Clear the fridge", ColorHexes["blue"]);
+createTodo("Bring back the milk","green");
+createTodo("Let the dogs out", "red");
+createTodo("Meditate for 10 seconds", "blue");
+createTodo("Clear the fridge", "blue");
 
 require("image!red-button");
 require("image!blue-button");
@@ -344,8 +344,25 @@ var TodoList = (function() {
     todosUpdated: function() {
       var rows = todos.get();
 
+      var filterColor = this.state.selectedColor;
+
+      if(filterColor != null) {
+        var filteredRows = {};
+        for(var key in rows) {
+          var todo = rows[key];
+          if(todo.color === filterColor) {
+            filteredRows[key] = todo;
+          }
+        }
+
+        rows = filteredRows;
+      }
+
+      console.log("filtered",filterColor,rows);
+
+
       // animate row insertion and deletion
-      LayoutAnimation.configureNext(LayoutAnimation.create(100,LayoutAnimation.Types.easeInEaseOut,LayoutAnimation.Properties.opacity))
+      LayoutAnimation.configureNext(LayoutAnimation.create(300  ,LayoutAnimation.Types.easeInEaseOut,LayoutAnimation.Properties.opacity))
 
       this.setState({
         dataSource: this.state.dataSource.cloneWithRows(rows),
@@ -362,13 +379,34 @@ var TodoList = (function() {
       });
     },
 
+    handleFilterByColor: function(color) {
+      // var color = ColorHexes[color];
+      if(this.state.selectedColor === color) {
+        this.setState({selectedColor: null}, () => {
+          this.todosUpdated();
+        });
+      } else {
+        console.log("set color",color);
+        this.setState({selectedColor: color}, () => {
+          this.todosUpdated();
+        });
+      }
+    },
+
     render: function() {
-      var buttons = ["red","yellow","blue","green"].map(function(color) {
+      var buttons = ["red","yellow","blue","green"].map((color) => {
+        var embiggen;
+        if(this.state.selectedColor === color) {
+          embiggen = {
+            transform: [{scale: 1.3}],
+          }
+        }
         return (
-          <Image
-            key={color+"-button"}
-            style={css.colorSelector}
-            source={require("image!"+color+"-button")}/>
+          <TouchableOpacity key={color+"-button"} onPress={this.handleFilterByColor.bind(null,color)}>
+            <Image
+              style={[css.colorSelector,embiggen]}
+              source={require("image!"+color+"-button")}/>
+          </TouchableOpacity>
         );
       });
 
