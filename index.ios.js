@@ -24,6 +24,7 @@ var {
 var ColorHexes = {
   "red": "#FE4515",
   "yellow": "#F8FE15",
+  "orange": "#FF7D00",
   "blue": "#396DFF",
   "green": "#3AFF47",
 };
@@ -55,6 +56,7 @@ require("image!red-button");
 require("image!blue-button");
 require("image!yellow-button");
 require("image!green-button");
+require("image!orange-button");
 
 
 
@@ -108,7 +110,7 @@ var AddItem = (function() {
   return React.createClass({
     getInitialState: function() {
       return {
-        selectedColor: "yellow",
+        selectedColor: "orange",
       };
     },
 
@@ -131,7 +133,7 @@ var AddItem = (function() {
     },
 
     render: function() {
-      var buttons = ["red","yellow","blue","green"].map((color) => {
+      var buttons = ["red","orange","blue","green"].map((color) => {
         //
         return (
           <TouchableOpacity onPress={this.handleChangeColor.bind(this,color)}>
@@ -273,7 +275,7 @@ var TodoListItem = (function() {
 
 
       checkbox = (
-        <View style={[css.checkbox,showCheckbox ? css.checkboxShow : css.checkboxHide, {backgroundColor: todo.color || '#3AFF47'}]}>
+        <View style={[css.checkbox,showCheckbox ? css.checkboxShow : css.checkboxHide, {backgroundColor: ColorHexes[todo.color]}]}>
           <Image style={[css.checkmark,showCheckbox ? null : {marginLeft: -100}]} source={require("image!check-button")}/>
         </View>
       );
@@ -390,7 +392,7 @@ var TodoList = (function() {
     },
 
     render: function() {
-      var buttons = ["red","yellow","blue","green"].map((color) => {
+      var buttons = ["red","orange","blue","green"].map((color) => {
         var embiggen;
         if(this.state.selectedColor === color) {
           embiggen = {
