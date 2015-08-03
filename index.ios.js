@@ -17,6 +17,8 @@ var {
   TouchableOpacity,
   NavigatorIOS,
   Animated,
+  PanResponder,
+  LayoutAnimation,
 } = React;
 
 var ColorHexes = {
@@ -28,15 +30,26 @@ var ColorHexes = {
 
 var Baobab = require("baobab");
 var db = new Baobab({
-  todos: [
-    {title: "Bring back the milk", color: ColorHexes["green"]},
-    {title: "Let the dogs out", color: ColorHexes["red"]},
-    {title: "Meditate for 10 seconds", color: ColorHexes["blue"]},
-  ],
+  todos: {},
 });
 
 var todos = db.select("todos");
 
+var todoIDCounter = 0;
+function createTodo(title,color) {
+  var id = String(todoIDCounter++);
+  todos.set(id,{title: title, color: color, id: id});
+}
+
+function completeTodo(todo) {
+  var oldTodos = todos.get();
+  todos.unset(String(todo.id));
+}
+
+createTodo("Bring back the milk",ColorHexes["green"]);
+createTodo("Let the dogs out", ColorHexes["red"]);
+createTodo("Meditate for 10 seconds", ColorHexes["blue"]);
+createTodo("Clear the fridge", ColorHexes["blue"]);
 
 require("image!red-button");
 require("image!blue-button");
@@ -50,9 +63,6 @@ var AddItem = (function() {
     container: {
       flex: 1,
       paddingTop: 16,
-      // marginTop: -200,
-      // padding: 10,
-      // backgroundColor: 'red',
     },
 
     label: {
@@ -105,7 +115,7 @@ var AddItem = (function() {
     onSubmit: function(e) {
       var text = e.nativeEvent.text.trim();
       if(text !== "") {
-        todos.push({title: text, color: this.state.selectedColor});
+        createTodo(text,this.state.selectedColor);
         this.props.navigator.pop();
       }
 
@@ -169,10 +179,24 @@ var TodoListItem = (function() {
       fontWeight: '100',
     },
 
-    todoColor: {
+    checkbox: {
+      marginRight: 15,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+
+    checkboxHide: {
       width: 15,
       height: 50,
-      marginRight: 15,
+    },
+
+    checkboxShow: {
+      width: 50,
+      height: 50,
+    },
+
+    checkmark: {
+      tintColor: "#fff",
     },
   });
 
@@ -180,14 +204,61 @@ var TodoListItem = (function() {
     getInitialState: function() {
       return {
         opacity: new Animated.Value(0),
+        showCheckmark: false,
       }
     },
 
     componentWillMount: function() {
+      this._panResponder = PanResponder.create({
+        // Ask to be the responder:
+        onStartShouldSetPanResponder: (evt, gestureState) => true,
+        onStartShouldSetPanResponderCapture: (evt, gestureState) => true,
+        onMoveShouldSetPanResponder: (evt, gestureState) => true,
+        onMoveShouldSetPanResponderCapture: (evt, gestureState) => true,
+        onPanResponderTerminationRequest: (evt, gestureState) => true,
+
+        onPanResponderRelease: (evt, gestureState) => {
+          var dx = gestureState.dx;
+          console.log("swipe",{dx:gestureState.dx,dy:gestureState.dy});
+          if(dx > 50) {
+            this.setState({showCheckmark: true});
+          } else if(dx < 50) {
+            this.setState({showCheckmark: false});
+          }
+
+          LayoutAnimation.configureNext(LayoutAnimation.create(
+            100,
+            LayoutAnimation.Types.easeInEaseOut,
+            LayoutAnimation.Properties.opacity),
+          () => {
+            this.animateTodoComplete();
+            // completeTodo(this.props.todo);
+          }, (err) => {
+
+          });
+          // LayoutAnimation.easeInEaseOut();
+        },
+
+      });
+
       Animated.timing(this.state.opacity,{
-        duration: 1000,
+        duration: 200,
         toValue: 1,
       }).start();
+    },
+
+    animateTodoComplete: function() {
+      var newOpacity = new Animated.Value(1);
+      this.setState({
+        opacity: newOpacity,
+      });
+
+      Animated.timing(newOpacity,{
+        duration: 500,
+        toValue: 0,
+      }).start(() => {
+        completeTodo(this.props.todo);
+      });
     },
 
     render: function() {
@@ -195,14 +266,29 @@ var TodoListItem = (function() {
       var animatedStyles = {
         opacity: this.state.opacity,
       };
+
+      var checkbox;
+
+      var showCheckbox = this.state.showCheckmark == true
+
+
+      checkbox = (
+        <View style={[css.checkbox,showCheckbox ? css.checkboxShow : css.checkboxHide, {backgroundColor: todo.color || '#3AFF47'}]}>
+          <Image style={[css.checkmark,showCheckbox ? null : {marginLeft: -100}]} source={require("image!check-button")}/>
+        </View>
+      );
+
+
       return (
-        <Animated.View style={[css.todoRow,animatedStyles]}>
-          <View style={[css.todoColor,{backgroundColor: todo.color || '#3AFF47'}]}>
+        <Animated.View style={[css.todoRow,animatedStyles]}
+          {...this._panResponder.panHandlers}>
+          {checkbox}
+          <View>
+            <Text
+              style={css.todoText}>
+              {todo.title}
+            </Text>
           </View>
-          <Text
-            style={css.todoText}>
-            {todo.title}
-          </Text>
         </Animated.View>
       );
     },
@@ -245,18 +331,29 @@ var TodoList = (function() {
 
     getInitialState: function() {
       return {
-        dataSource: new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2}),
+        dataSource: new ListView.DataSource({rowHasChanged: (r1, r2) => {
+          if(r1 !== r2) {
+            console.log("row changed",r1,r2);
+          }
+
+          return r1 !== r2;
+        }}),
       };
     },
 
     todosUpdated: function() {
+      var rows = todos.get();
+
+      // animate row insertion and deletion
+      LayoutAnimation.configureNext(LayoutAnimation.create(100,LayoutAnimation.Types.easeInEaseOut,LayoutAnimation.Properties.opacity))
+
       this.setState({
-        dataSource: this.state.dataSource.cloneWithRows(todos.get()),
+        dataSource: this.state.dataSource.cloneWithRows(rows),
       });
     },
 
-    renderTodo: function(todo) {
-      return <TodoListItem todo={todo}></TodoListItem>;
+    renderTodo: function(todo,section,row) {
+      return <TodoListItem key={todo.id} todo={todo}></TodoListItem>;
     },
 
     onAddItemTapped: function() {
@@ -269,6 +366,7 @@ var TodoList = (function() {
       var buttons = ["red","yellow","blue","green"].map(function(color) {
         return (
           <Image
+            key={color+"-button"}
             style={css.colorSelector}
             source={require("image!"+color+"-button")}/>
         );
