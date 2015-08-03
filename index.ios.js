@@ -19,9 +19,20 @@ var {
   Animated,
 } = React;
 
+var ColorHexes = {
+  "red": "#FE4515",
+  "yellow": "#F8FE15",
+  "blue": "#396DFF",
+  "green": "#3AFF47",
+};
+
 var Baobab = require("baobab");
 var db = new Baobab({
-  todos: [{title: "Bring back the milk"},{title: "Let the dogs out"}],
+  todos: [
+    {title: "Bring back the milk", color: ColorHexes["green"]},
+    {title: "Let the dogs out", color: ColorHexes["red"]},
+    {title: "Meditate for 10 seconds", color: ColorHexes["blue"]},
+  ],
 });
 
 var todos = db.select("todos");
@@ -31,6 +42,8 @@ require("image!red-button");
 require("image!blue-button");
 require("image!yellow-button");
 require("image!green-button");
+
+
 
 var AddItem = (function() {
   var css = StyleSheet.create({
@@ -83,24 +96,43 @@ var AddItem = (function() {
   var styles = css;
 
   return React.createClass({
+    getInitialState: function() {
+      return {
+        selectedColor: "yellow",
+      };
+    },
+
     onSubmit: function(e) {
-      var text = e.nativeEvent.text;
-      todos.push({title: text});
-      this.props.navigator.pop();
+      var text = e.nativeEvent.text.trim();
+      if(text !== "") {
+        todos.push({title: text, color: this.state.selectedColor});
+        this.props.navigator.pop();
+      }
+
+
     },
 
     onCancel: function(e) {
       this.props.navigator.pop();
     },
 
+    handleChangeColor: function(color) {
+      this.setState({selectedColor: color});
+    },
+
     render: function() {
-      var buttons = ["red","yellow","blue","green"].map(function(color) {
+      var buttons = ["red","yellow","blue","green"].map((color) => {
+        //
         return (
-          <Image
-            style={css.colorSelector}
-            source={require("image!"+color+"-button")}/>
+          <TouchableOpacity onPress={this.handleChangeColor.bind(this,color)}>
+            <Image
+              style={css.colorSelector}
+              source={require("image!"+color+"-button")}/>
+          </TouchableOpacity>
         );
       });
+
+      var inputColor = this.state.selectedColor === "yellow" ? "#333" : "#fff"
 
       return (
         <View style={css.container}>
@@ -109,9 +141,10 @@ var AddItem = (function() {
           </View>
           <Text style={css.label}>Change The World</Text>
           <TextInput ref="input"
-            style={css.input}
+            style={[css.input,{color: inputColor},{backgroundColor: this.state.selectedColor}]}
             onSubmitEditing={this.onSubmit}
-            placeholder="One TODO at a time"/>
+            placeholder="One TODO at a time"
+            placeholderTextColor={inputColor}/>
           <TouchableOpacity onPress={this.onCancel}>
             <Image style={css.cancelButton}
               source={require("image!cancel-button")}/>
@@ -139,7 +172,6 @@ var TodoListItem = (function() {
     todoColor: {
       width: 15,
       height: 50,
-      backgroundColor: '#3AFF47',
       marginRight: 15,
     },
   });
@@ -165,7 +197,7 @@ var TodoListItem = (function() {
       };
       return (
         <Animated.View style={[css.todoRow,animatedStyles]}>
-          <View style={css.todoColor}>
+          <View style={[css.todoColor,{backgroundColor: todo.color || '#3AFF47'}]}>
           </View>
           <Text
             style={css.todoText}>
