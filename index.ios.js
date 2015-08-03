@@ -358,9 +358,6 @@ var TodoList = (function() {
         rows = filteredRows;
       }
 
-      console.log("filtered",filterColor,rows);
-
-
       // animate row insertion and deletion
       LayoutAnimation.configureNext(LayoutAnimation.create(300  ,LayoutAnimation.Types.easeInEaseOut,LayoutAnimation.Properties.opacity))
 
@@ -386,7 +383,6 @@ var TodoList = (function() {
           this.todosUpdated();
         });
       } else {
-        console.log("set color",color);
         this.setState({selectedColor: color}, () => {
           this.todosUpdated();
         });
@@ -414,7 +410,9 @@ var TodoList = (function() {
         <View style={css.container}>
           <ListView
               dataSource={this.state.dataSource}
-              renderRow={this.renderTodo}/>
+              renderRow={this.renderTodo}
+              // without setting the pageSize we get weird artifact
+              pageSize={10}/>
           <View style={css.toolbar}>
             {buttons}
             <TouchableOpacity onPress={this.onAddItemTapped}>
